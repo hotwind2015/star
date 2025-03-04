@@ -1,47 +1,49 @@
-'use strict';      // eslint-disable-line
+import gulp from 'gulp';
+import sloc from 'gulp-sloc2';
+import eslint from 'gulp-eslint';
+import imagemin from 'gulp-imagemin';
+import pngquant from 'imagemin-pngquant';
 
-/**
- * Gulp file for front-end js check and etc.
- * Date      : 2015/10/21
- * copyright : (c) hustcer
- */
+const lintConfig = { configFile: 'eslint.json' };
 
-let gulp     = require('gulp'),
-    sloc     = require('gulp-sloc2'),
-    eslint   = require('gulp-eslint'),
-    imagemin = require('gulp-imagemin'),
-    pngquant = require('imagemin-pngquant');
-
-gulp.task('check',  () => {
-
-    let src = ['Gulpfile.js', 'star.js', 'lib/**/*.js'];
-
+// 代码检查任务
+const check = () => {
+    const src = ['Gulpfile.js', 'star.js', 'lib/**/*.js'];
     return gulp.src(src)
-               .pipe(eslint({ configFile: 'eslint.json' }))
-               .pipe(eslint.format('stylish'));
-});
+        .pipe(eslint(lintConfig))
+        .pipe(eslint.format('stylish'));
+};
 
-gulp.task('sloc', () => {
+// 代码统计任务
+const codeStats = () => {
+    const src = ['Gulpfile.js', 'star.js', 'lib/**/*.js'];
+    return gulp.src(src).pipe(sloc());
+};
 
-    let src = ['Gulpfile.js', 'star.js', 'lib/**/*.js'];
-
-    gulp.src(src).pipe(sloc());
-});
-
-gulp.task('opt',  () => {
-
-    let imgPath = ['snapshot/*'];
-
+// 图片优化任务
+const optimizeImages = () => {
+    const imgPath = ['snapshot/*'];
     return gulp.src(imgPath)
-               .pipe(imagemin({
-                       progressive : true,
-                       use         : [pngquant()],
-                   }))
-               .pipe(gulp.dest('snapshot/'));
-});
+        .pipe(imagemin({
+            progressive: true,
+            use: [pngquant()],
+        }))
+        .pipe(gulp.dest('snapshot/'));
+};
 
-let defaultTasks = ['check', 'opt', 'sloc'];
+// 组合任务
+const runAll = gulp.parallel(check, optimizeImages, codeStats);
 
-gulp.task('default', defaultTasks, () => {
-    console.log(`---------> All gulp task has been done! Task List: ${defaultTasks}`);
-});
+// 默认任务
+const defaultTask = async () => {
+    await runAll();
+    console.log(`\n---------> All tasks completed! Executed: ${runAll._tasks.join(', ')}\n`);
+};
+
+// 导出任务
+export {
+    check,
+    codeStats as sloc,
+    optimizeImages as opt,
+    defaultTask as default
+};
