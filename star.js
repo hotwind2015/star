@@ -14,6 +14,7 @@ import colors from 'colors';
 import Promise from 'bluebird';
 import {Command} from 'commander';
 import { conf } from './lib/conf.js';
+import {cmd}  from './lib/cmd.js'
 // import pkg from './package.json' with { type: 'json' };
 import { readFileSync } from 'fs';
 const pkg = JSON.parse(readFileSync('./package.json', 'utf8'));
@@ -35,9 +36,9 @@ colors.setTheme(COLOR_THEME);
     }
 });
 
-const cmd = new Command()
+const program = new Command()
 
-cmd
+program
     .version(pkg.version)
     .usage(`[options]${' OR'.em} star code1,code2，code3...，codeN`)
     .description('Star is a command line tool for STock Analysis and Research.')
@@ -83,6 +84,8 @@ cmd
                      and sort by capacity/pe/pb only works while using tencent data source.`))
     .parse(process.argv);
 
+Object.assign(cmd, program.opts())
+
 const actions = {
     WATCH: async function watch() {
         const { Watch } = await import('./lib/watch.js');
@@ -100,7 +103,7 @@ const actions = {
         if (cmd.latestSh) { Insider.querySHLatest(); return false; }
         if (cmd.topBuy) { Insider.queryTopList('BV'); return false; }
         if (cmd.topSell) { Insider.queryTopList('SV'); return false; }
-        if (cmd.insider === true) { Insider.queryMiscInsider(); return false; }
+        if (cmd.insider === true) { Insider.queryInsider(); return false; }
 
         const query = cmd.insider.replace(/，/g, ',');
         const symbols = _.trimEnd(query, ',').split(',');
@@ -145,9 +148,9 @@ async function doCmd() {
     if (cmd.insider) { action = 'INSIDER'; }
     if (cmd.cal) { action = 'CAL'; }
 
-    if (cmd.args.length === 1) {
+    if (program.args.length === 1) {
         action = 'QUERY';
-    } else if (cmd.args.length > 1) {
+    } else if (program.args.length > 1) {
         console.error('Input error, please try again, or run "star -h" for more help.'.error);
         return false;
     }
